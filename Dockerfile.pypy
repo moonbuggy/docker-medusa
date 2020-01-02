@@ -1,0 +1,55 @@
+ARG ALPINE_VERSION=3.11
+
+FROM moonbuggy2000/alpine-s6-pypy:3.6-alpine3.11
+
+ARG APP_PATH=/app
+
+ARG MEDUSA_COMMIT_BRANCH=master
+ARG MEDUSA_COMMIT_HASH=d0c136d7a528a471b51676140bd35d24d97f65c6
+
+ENV PYTHON_INTERPRETER=pypy3 \ 
+	MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
+	MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}" \
+	PUID=1000 \
+	PGID=1000 \
+	APP_PATH=${APP_PATH} \
+	PATH="${APP_PATH}:${PATH}"
+
+WORKDIR ${APP_PATH}
+
+# Install packages
+RUN \
+	# Runtime packages
+	apk --update add --no-cache \
+		git \
+		mediainfo \
+		shadow \
+		tzdata \
+		unrar \
+	# PyPy/Python path
+	&& ln -s /usr/local/bin/pypy3 /usr/local/bin/python \
+	# Add user and group
+	&& addgroup -g ${PGID} medusa \
+	&& adduser -DH -u ${PUID} -G medusa medusa \
+	# Install Medusa
+	&& git init \
+	&& git remote add origin https://github.com/pymedusa/Medusa.git \
+	&& git fetch --depth=1 origin ${MEDUSA_COMMIT_HASH} \
+	&& git reset --hard FETCH_HEAD \
+	&& rm -rf $(cat .dockerignore) \
+	# Fix permissions
+	&& chown -R medusa:medusa ${APP_PATH} \
+	# Cleanup
+	&& apk del --no-cache git \
+	&& rm -rf /var/cache/apk/
+
+EXPOSE 8081
+
+VOLUME /config /downloads /tv /anime
+
+COPY ./etc /etc
+
+ENTRYPOINT [ "/init" ]
+
+HEALTHCHECK --start-period=60s --timeout=10s \
+	CMD wget --quiet --tries=1 --spider http://127.0.0.1:8081/ || exit 1

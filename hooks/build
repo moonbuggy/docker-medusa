@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+case "${DOCKER_TAG}" in
+	0.3.9|0.3.9-python|python|latest)
+		MEDUSA_COMMIT_HASH=d0c136d7a528a471b51676140bd35d24d97f65c6
+		DOCKERFILE="Dockerfile"
+		;;
+	0.3.9-pypy|pypy)
+		MEDUSA_COMMIT_HASH=d0c136d7a528a471b51676140bd35d24d97f65c6
+		DOCKERFILE="Dockerfile.pypy"
+		;;
+esac
+
+docker build --build-arg MEDUSA_COMMIT_HASH=${MEDUSA_COMMIT_HASH} -t ${IMAGE_NAME} -f ${DOCKERFILE} .

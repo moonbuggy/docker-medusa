@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv /bin/ash
+
+exec \
+        s6-setuidgid medusa ${PYTHON_INTERPRETER} ${APP_PATH}/start.py \
+        --nolaunch --datadir /config
