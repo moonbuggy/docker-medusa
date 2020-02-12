@@ -9,4 +9,3 @@ echo "[${0##*/}] uid: ${PUID}, gid: ${PGID}"
 
 groupmod -o -g "$PGID" medusa
 usermod -o -u "$PUID" -g "$PGID" medusa
-

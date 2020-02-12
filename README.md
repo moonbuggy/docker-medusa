@@ -1,14 +1,17 @@
 # Docker Medusa
-[Medusa](https://pymedusa.com/) in an Alpine container with either Python or PyPy.
+[Medusa](https://pymedusa.com/) in an Alpine or minideb container with either Python or PyPy.
 
 ## Usage
 `docker run -d --name Medusa -p 8081:8081 moonbuggy2000/medusa:<tag>`
 
 ### Tags
-* `latest` / `python` - using Python as the interpreter
-* `pypy`              - using PyPy as the interpreter
+* `latest` / `python` - Alpine using Python as the interpreter
+* `pypy`              - Alpine using PyPy as the interpreter
+* `minideb`           - Bitnami's minideb using Python as the interpreter
 
 PyPy may result in Medusa running faster, although I've neither benchmarked it nor done a thorough test of compatibility. It seems to run as expected for me (so far).
+
+Python generally runs faster in Debian than Alpine due to Alpine's usage of musl instead of glibc, so the `minideb` image should theoretically perform better (at the cost of increased image size). Again, I have not benchmarked this to confirm.
 
 ### Environment variables
 * `PUID` - user ID to run as (default: `1000`)

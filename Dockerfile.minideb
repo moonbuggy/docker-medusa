@@ -1,0 +1,61 @@
+ARG PYTHON_VERSION=3.7
+
+FROM moonbuggy2000/minideb-s6-python:${PYTHON_VERSION}
+
+ARG PYTHON_VERSION
+ARG APP_PATH=/app
+
+ARG MEDUSA_COMMIT_BRANCH=master
+ARG MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
+
+ENV APP_PATH="${APP_PATH}" \
+	PYTHON_INTERPRETER="python3" \
+	PATH="${APP_PATH}:${PATH}" \
+	PYTHONDONTWRITEBYTECODE=1 \
+	PYTHONUNBUFFERED=1 \
+	MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
+	MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}" \
+	PUID=1000 \
+	PGID=1000
+
+WORKDIR ${APP_PATH}
+
+COPY ./etc /etc
+
+RUN \
+	# Install packages
+	apt-get update \
+	&& apt-get install -qy --no-install-recommends \
+		git-core \
+		mediainfo \
+		openssl \
+#		tzdata \
+		unrar-free \
+		wget \
+	# Link Python
+	&& ln -sf /usr/bin/python3 /usr/bin/python \
+	# Install Medusa
+	&& git init \
+	&& git remote add origin https://github.com/pymedusa/Medusa.git \
+	&& git fetch --depth=1 origin ${MEDUSA_COMMIT_HASH} \
+	&& git reset --hard FETCH_HEAD \
+	&& rm -rf $(cat .dockerignore) \
+	# Add user and group
+	&& useradd -MU -u 1000 medusa \
+	# Fix permissions
+	&& chown -R medusa:medusa ${APP_PATH} \
+	# Fix run script
+	&& sed -i -E "s|(\/bin\/ash)|\/bin\/bash|" /etc/services.d/medusa/run \
+	# Cleanup
+#	&& apt-get remove --purge -qy git-core \
+	&& rm -rf /var/lib/apt/lists/*
+
+EXPOSE 8081
+
+VOLUME /config /downloads /tv /anime
+
+ENTRYPOINT [ "/init" ]
+
+HEALTHCHECK --start-period=60s --timeout=10s \
+	CMD wget --quiet --tries=1 http://127.0.0.1:8081/ -O /dev/null || exit 1
+#	CMD curl -sL http://127.0.0.1:8081/ || exit 1
