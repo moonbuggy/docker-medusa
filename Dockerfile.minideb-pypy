@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.7
+ARG MINIDEB_RELEASE=buster
 ARG MEDUSA_COMMIT_BRANCH=master
 ARG MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
 
@@ -19,9 +19,9 @@ RUN git init \
 
 # create the final image
 #
-FROM moonbuggy2000/minideb-s6-python:${PYTHON_VERSION}
+FROM moonbuggy2000/minideb-s6:${MINIDEB_RELEASE}
 
-ARG PYTHON_VERSION
+ARG MINIDEB_RELEASE
 ARG APP_PATH=/app
 ARG PUID=1000
 ARG PGID=1000
@@ -39,9 +39,7 @@ RUN \
 	# Set some environment variables via cont-init.d
 	add-contenv \
 		APP_PATH=${APP_PATH} \
-		PYTHON_INTERPRETER=python3 \
-		PYTHONDONTWRITEBYTECODE=1 \
-		PYTHONUNBUFFERED=1 \
+		PYTHON_INTERPRETER=pypy3 \
 		MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
 		MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}" \
 		LANG=C.UTF-8 \
@@ -51,6 +49,7 @@ RUN \
 		git-core \
 		mediainfo \
 		openssl \
+		pypy3 \
 #		tzdata \
 		unrar-free \
 		wget \

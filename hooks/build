@@ -9,18 +9,22 @@ case "${DOCKER_TAG}" in
 		MEDUSA_COMMIT_HASH=d0c136d7a528a471b51676140bd35d24d97f65c6
 		DOCKERFILE="Dockerfile"
 		;;
-    0.3.12-pypy|pypy)
-        MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
-        DOCKERFILE="Dockerfile.pypy"
-        ;;
-    0.3.12-minideb|0.3.12-minideb-python|minideb)
-        MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
-        DOCKERFILE="Dockerfile.minideb"
-        ;;
-    0.3.12|0.3.12-python|python|latest|*)
-        MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
-        DOCKERFILE="Dockerfile"
-        ;;
+	0.3.12-pypy|pypy)
+		MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
+		DOCKERFILE="Dockerfile.pypy"
+		;;
+	0.3.12-minideb-pypy|minideb-pypy)
+		MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
+		DOCKERFILE="Dockerfile.minideb-pypy"
+		;;
+	0.3.12-minideb|0.3.12-minideb-python|minideb)
+		MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
+		DOCKERFILE="Dockerfile.minideb"
+		;;
+	0.3.12|0.3.12-python|python|latest|*)
+		MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
+		DOCKERFILE="Dockerfile"
+		;;
 esac
 
 echo "docker build --build-arg MEDUSA_COMMIT_HASH=${MEDUSA_COMMIT_HASH} -t ${IMAGE_NAME} -f ${DOCKERFILE} ."

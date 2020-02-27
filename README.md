@@ -8,6 +8,7 @@
 * `latest` / `python` - Alpine using Python as the interpreter
 * `pypy`              - Alpine using PyPy as the interpreter
 * `minideb`           - Bitnami's minideb using Python as the interpreter
+* `minideb-pypy`      - Bitnami's minideb using PyPy as the interpreter
 
 PyPy may result in Medusa running faster, although I've neither benchmarked it nor done a thorough test of compatibility. It seems to run as expected for me (so far).
 

@@ -37,14 +37,13 @@ WORKDIR ${APP_PATH}
 
 RUN \
 	# Set some environment variables via cont-init.d
-	echo -e "\
-		APP_PATH=${APP_PATH}\n\
-		PYTHON_INTERPRETER=python3\n\
-		PYTHONDONTWRITEBYTECODE=1\n\
-		PYTHONUNBUFFERED=1\
+	add-contenv \
+		APP_PATH=${APP_PATH} \
+		PYTHON_INTERPRETER=python3 \
+		PYTHONDONTWRITEBYTECODE=1 \
+		PYTHONUNBUFFERED=1 \
 		MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
 		MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}" \
-		" | tr -d '\t' >> /etc/contenv_extra \
 	# Install packages
 	&& apk --update add --no-cache \
 		git \
