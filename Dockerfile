@@ -1,52 +1,68 @@
 ARG ALPINE_VERSION=3.11.2
-
-FROM moonbuggy2000/alpine-s6:${ALPINE_VERSION}
-
 ARG PYTHON_VERSION=3.8
-ARG APP_PATH=/app
 
 ARG MEDUSA_COMMIT_BRANCH=master
 ARG MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
 
-ENV PYTHON_INTERPRETER=python3 \
-	APP_PATH="${APP_PATH}" \
-	PYTHON_VERSION="${PYTHON_VERSION}" \
-	PATH="${APP_PATH}:${PATH}" \
-	PYTHONDONTWRITEBYTECODE=1 \
-	PYTHONUNBUFFERED=1 \
-	MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
-	MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}" \
-	PUID=1000 \
-	PGID=1000
+# get the source code
+#
+FROM alpine/git:v2.24.1 as source
+
+ARG MEDUSA_COMMIT_BRANCH
+ARG MEDUSA_COMMIT_HASH
+
+WORKDIR /source
+
+RUN git init \
+	&& git remote add origin https://github.com/pymedusa/Medusa.git \
+	&& git fetch --depth=1 origin ${MEDUSA_COMMIT_HASH} \
+	&& git reset --hard FETCH_HEAD \
+	&& rm -rf $(cat .dockerignore)
+
+FROM moonbuggy2000/alpine-s6:${ALPINE_VERSION}
+
+ARG PYTHON_VERSION
+ARG APP_PATH=/app
+ARG PUID=1000
+ARG PGID=1000
+
+ARG MEDUSA_COMMIT_BRANCH
+ARG MEDUSA_COMMIT_HASH
+
+ENV PATH="${APP_PATH}:${PATH}" \
+	PUID=${PUID} \
+	PGID=${PGID}
 
 WORKDIR ${APP_PATH}
 
 RUN \
+	# Set some environment variables via cont-init.d
+	echo -e "\
+		APP_PATH=${APP_PATH}\n\
+		PYTHON_INTERPRETER=python3\n\
+		PYTHONDONTWRITEBYTECODE=1\n\
+		PYTHONUNBUFFERED=1\
+		MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
+		MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}" \
+		" | tr -d '\t' >> /etc/contenv_extra \
 	# Install packages
-	apk --update add --no-cache \
+	&& apk --update add --no-cache \
 		git \
 		mediainfo \
 		python3=~${PYTHON_VERSION} \
 		shadow \
-		tzdata \
+#		tzdata \
 		unrar \
 	# Link Python
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
-	# Install Medusa
-	&& git init \
-	&& git remote add origin https://github.com/pymedusa/Medusa.git \
-	&& git fetch --depth=1 origin ${MEDUSA_COMMIT_HASH} \
-	&& git reset --hard FETCH_HEAD \
-	&& rm -rf $(cat .dockerignore) \
 	# Add user and group
 	&& addgroup -g ${PGID} medusa \
 	&& adduser -DH -u ${PUID} -G medusa medusa \
-	# Fix permissions
-	&& chown -R medusa:medusa ${APP_PATH} \
 	# Cleanup
 	&& apk del --no-cache git \
 	&& rm -rf /var/cache/apk/
 
+COPY --from=source --chown=medusa:medusa /source/ ./
 COPY ./etc /etc
 
 EXPOSE 8081
@@ -56,4 +72,4 @@ VOLUME /config /downloads /tv /anime
 ENTRYPOINT [ "/init" ]
 
 HEALTHCHECK --start-period=60s --timeout=10s \
-	CMD wget --quiet --tries=1 --spider http://127.0.0.1:8081/ || exit 1
+	CMD wget --quiet --tries=1 http://127.0.0.1:8081/ -O /dev/null || exit 1

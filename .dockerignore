@@ -1,4 +1,5 @@
-.git
-.cache
+.git*
+.dockerignore
 *.md
+Dockerfile*
 hooks/

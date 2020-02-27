@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv /bin/ash
+#!/usr/bin/with-contenv /bin/sh
 
 exec \
         s6-setuidgid medusa ${PYTHON_INTERPRETER} ${APP_PATH}/start.py \
