@@ -1,12 +1,12 @@
-ARG ALPINE_VERSION=3.11.2
+ARG ALPINE_VERSION=3.11.3
 ARG PYTHON_VERSION=3.8
 
 ARG MEDUSA_COMMIT_BRANCH=master
-ARG MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
+ARG MEDUSA_COMMIT_HASH=8f6b6665c778cb456899809877c3bc15a547abf6
 
 # get the source code
 #
-FROM alpine/git:v2.24.1 as source
+FROM moonbuggy2000/fetcher:latest as source
 
 ARG MEDUSA_COMMIT_BRANCH
 ARG MEDUSA_COMMIT_HASH
@@ -19,6 +19,9 @@ RUN git init \
 	&& git reset --hard FETCH_HEAD \
 	&& rm -rf $(cat .dockerignore)
 
+
+# build the image
+#
 FROM moonbuggy2000/alpine-s6:${ALPINE_VERSION}
 
 ARG PYTHON_VERSION
