@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+. hooks/env
+
+## get the repo and tag strings
+#
+image_repo="${IMAGE_NAME%:*}"
+image_tag="${IMAGE_NAME#*:}"
+
+## generate and apply extra tags
+#
+tags=()
+
+case "${image_tag}" in
+	latest|python)
+		tags+=( "${TARGET_VERSION}" "${TARGET_VERSION}-python" 'latest' 'python' )
+		;;
+	"${LATEST_VERSION}")
+		tags+=( "${TARGET_VERSION}-python" 'latest' 'python' )
+		;;
+	"${TARGET_BUILD}")
+		tags+=( "${TARGET_VERSION}-${TARGET_BUILD}" )
+		;;
+	"${LATEST_VERSION}-${TARGET_BUILD}")
+		tags+=( "${TARGET_BUILD}" )
+		;;
+esac
+
+## push the tags
+#
+for tag in ${tags[@]}; do
+	echo '---'
+	printf 'Adding tag: %s:%s\n' "${image_repo}" "${tag}"
+	docker tag $IMAGE_NAME ${image_repo}:${tag}
+	docker push ${image_repo}:${tag} | grep digest
+done
+echo '---'

@@ -1,37 +1,13 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-# determine the version to install
-case "${DOCKER_TAG}" in
-	*0.3.9*)
-		MEDUSA_COMMIT_HASH=d0c136d7a528a471b51676140bd35d24d97f65c6
-		;;
-	*0.3.12*)
-		MEDUSA_COMMIT_HASH=ee1b898d0f74750c4c265d077fcc0da73d17b41e
-		;;
-	*0.3.15*|*)
-		MEDUSA_COMMIT_HASH=8f6b6665c778cb456899809877c3bc15a547abf6
-		;;
-esac
+. hooks/env
 
-# determine the Dockerfile to use
-case "${DOCKER_TAG}" in
-    *python*)
-        DOCKERFILE="Dockerfile"
-        ;;
-	*pypy*)
-		DOCKERFILE="Dockerfile.pypy"
-		;;
-	*minideb-pypy*)
-		DOCKERFILE="Dockerfile.minideb-pypy"
-		;;
-	*minideb*)
-		DOCKERFILE="Dockerfile.minideb"
-		;;
-    *)
-        DOCKERFILE="Dockerfile"
-        ;;
-esac
+arg_string=''
 
-echo "docker build --build-arg MEDUSA_COMMIT_HASH=${MEDUSA_COMMIT_HASH} -t ${IMAGE_NAME} -f ${DOCKERFILE} ."
+[ ! -z "${TARGET_BUILD}" ] && arg_string="${arg_string} -f Dockerfile.${TARGET_BUILD}"
+[ ! -z "${COMMIT_HASH}" ] && arg_string="${arg_string} --build-arg MEDUSA_COMMIT_HASH=${COMMIT_HASH}"
 
-docker build --build-arg MEDUSA_COMMIT_HASH=${MEDUSA_COMMIT_HASH} -t ${IMAGE_NAME} -f ${DOCKERFILE} .
+build_cmd=(docker build ${arg_string} -t ${IMAGE_NAME} .)
+
+printf '\n---\n%s\n---\n\n' "${build_cmd[*]}"
+"${build_cmd[@]}"

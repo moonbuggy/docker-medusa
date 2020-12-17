@@ -2,7 +2,7 @@ ARG ALPINE_VERSION=3.11.3
 ARG PYTHON_VERSION=3.8
 
 ARG MEDUSA_COMMIT_BRANCH=master
-ARG MEDUSA_COMMIT_HASH=8f6b6665c778cb456899809877c3bc15a547abf6
+ARG MEDUSA_COMMIT_HASH=552f1199853dfce905f9ba6e27194da67070ea6a
 
 # get the source code
 #
@@ -73,5 +73,5 @@ VOLUME /config /downloads /tv /anime
 
 ENTRYPOINT [ "/init" ]
 
-HEALTHCHECK --start-period=60s --timeout=10s \
+HEALTHCHECK --start-period=10s --timeout=10s \
 	CMD wget --quiet --tries=1 http://127.0.0.1:8081/ -O /dev/null || exit 1
