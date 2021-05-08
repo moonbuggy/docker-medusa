@@ -1,0 +1,101 @@
+ARG PYTHON_VERSION="3.8"
+
+ARG FROM_IMAGE="moonbuggy2000/debian-slim-s6-python:${PYTHON_VERSION}"
+
+ARG MEDUSA_COMMIT_BRANCH="master"
+ARG MEDUSA_COMMIT_HASH="c302d8ae089a3c41eb8dda166cb71f9a4b39b79e"
+
+ARG APP_PATH="/app"
+ARG PUID=1000
+ARG PGID=1000
+
+ARG TARGET_ARCH_TAG
+
+## get the source code
+#
+FROM moonbuggy2000/fetcher:latest AS source
+
+ARG MEDUSA_COMMIT_HASH
+
+WORKDIR /source
+
+RUN git init -q \
+	&& git remote add origin https://github.com/pymedusa/Medusa.git \
+	&& git fetch --depth=1 origin "${MEDUSA_COMMIT_HASH}" \
+	&& git reset --hard FETCH_HEAD \
+	&& rm -rf $(cat .dockerignore)
+
+
+## build the image
+#
+FROM "${FROM_IMAGE}" AS builder
+
+# QEMU static binaries from pre_build
+ARG QEMU_DIR
+ARG QEMU_ARCH
+COPY _dummyfile "${QEMU_DIR}/qemu-${QEMU_ARCH}-static*" /usr/bin/
+
+ARG PYTHON_VERSION
+ARG APP_PATH
+ARG PUID
+ARG PGID
+
+ARG MEDUSA_COMMIT_BRANCH
+ARG MEDUSA_COMMIT_HASH
+
+WORKDIR "${APP_PATH}"
+
+RUN \
+	# Install packages
+	apt-get update \
+	&& apt-get install -qy --no-install-recommends \
+		git-core \
+		mediainfo \
+		openssl \
+		tzdata \
+		unrar-free \
+		wget \
+	# Add user and group
+	&& useradd -MU -u 1000 medusa \
+	# Cleanup
+#	&& apt-get remove --purge -qy git-core \
+	&& rm -rf /var/lib/apt/lists/*
+
+RUN \
+	# Set some environment variables via cont-init.d
+	add-contenv \
+		PATH="${APP_PATH}:${PATH}" \
+		APP_PATH="${APP_PATH}" \
+		PYTHON_INTERPRETER=python3 \
+		PYTHONDONTWRITEBYTECODE=1 \
+		PYTHONUNBUFFERED=1 \
+		MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
+		MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}" \
+		LANG=C.UTF-8
+
+COPY --from=source --chown=medusa:medusa /source/ ./
+COPY ./etc /etc
+
+RUN rm -f "/usr/bin/qemu-${QEMU_ARCH}-static" >/dev/null 2>&1
+
+
+## drop QEMU static binaries
+#
+FROM "moonbuggy2000/scratch:${TARGET_ARCH_TAG}"
+
+COPY --from=builder / /
+
+ARG PUID
+ARG PGID
+
+ENV PUID="${PUID}" \
+	PGID="${PGID}"
+
+EXPOSE 8081
+
+VOLUME /config /downloads /tv /anime
+
+ENTRYPOINT [ "/init" ]
+
+HEALTHCHECK --start-period=30s --timeout=10s \
+	CMD wget --quiet --tries=1 http://127.0.0.1:8081/ -O /dev/null || exit 1

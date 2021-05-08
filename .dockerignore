@@ -3,3 +3,4 @@
 *.md
 Dockerfile*
 hooks/
+.build_data/
