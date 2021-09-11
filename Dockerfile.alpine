@@ -31,8 +31,8 @@ RUN git init -q \
 FROM "${FROM_IMAGE}" AS builder
 
 # QEMU static binaries from pre_build
-ARG QEMU_DIR
-ARG QEMU_ARCH
+ARG QEMU_DIR=""
+ARG QEMU_ARCH=""
 COPY _dummyfile "${QEMU_DIR}/qemu-${QEMU_ARCH}-static*" /usr/bin/
 
 ARG APP_PATH
@@ -51,16 +51,15 @@ RUN apk --update add --no-cache \
 		shadow \
 		tzdata \
 		unrar \
-	# Add user and group
+	# Add user and group \
 	&& addgroup -g ${PGID} medusa \
 	&& adduser -DH -u ${PUID} -G medusa medusa \
-	# Cleanup
+	# Cleanup \
 #	&& apk del --no-cache git \
 	&& rm -rf /var/cache/apk/
 
-RUN \
-	# Set some environment variables via cont-init.d
-	add-contenv \
+# Set some environment variables via cont-init.d
+RUN add-contenv \
 		PATH="${APP_PATH}:${PATH}" \
 		APP_PATH="${APP_PATH}" \
 		PYTHON_INTERPRETER=python3 \

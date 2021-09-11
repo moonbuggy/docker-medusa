@@ -43,26 +43,26 @@ WORKDIR "${APP_PATH}"
 
 # Install packages
 RUN \
-	# Set some environment variables via cont-init.d
+	# Set some environment variables via cont-init.d \
 	add-contenv \
 		PATH="${APP_PATH}:${PATH}" \
 		APP_PATH="${APP_PATH}" \
 		PYTHON_INTERPRETER=pypy3 \
 		MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
 		MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}" \
-	# Runtime packages
+	# Runtime packages \
 	&& apk --update add --no-cache \
 		git \
 		mediainfo \
 		shadow \
 		tzdata \
 		unrar \
-	# Link Python/PyPy
+	# Link Python/PyPy \
 	&& ln -s /usr/local/bin/pypy3 /usr/local/bin/python \
-	# Add user and group
+	# Add user and group \
 	&& addgroup -g ${PGID} medusa \
 	&& adduser -DH -u ${PUID} -G medusa medusa \
-	# Cleanup
+	# Cleanup \
 #	&& apk del --no-cache git \
 	&& rm -rf /var/cache/apk/
 

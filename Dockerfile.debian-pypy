@@ -9,7 +9,7 @@ ARG APP_PATH="/app"
 ARG PUID=1000
 ARG PGID=1000
 
-ARG TARGET_ARCH_TAG
+ARG TARGET_ARCH_TAG="amd64"
 
 ## get the source code
 #
@@ -30,8 +30,8 @@ RUN git init -q \
 FROM "${FROM_IMAGE}" AS builder
 
 # QEMU static binaries from pre_build
-ARG QEMU_DIR
-ARG QEMU_ARCH
+ARG QEMU_DIR=""
+ARG QEMU_ARCH=""
 COPY _dummyfile "${QEMU_DIR}/qemu-${QEMU_ARCH}-static*" /usr/bin/
 
 ARG APP_PATH
@@ -52,10 +52,10 @@ RUN apt-get update \
 		tzdata \
 		unrar-free \
 		wget \
-	# Link Python
+	# Link Python \
 #	&& ln -sf /usr/bin/python3 /usr/bin/python \
 #	&& ln -s /usr/local/bin/pypy3 /usr/local/bin/python \
-	# Cleanup
+	# Cleanup \
 #	&& apt-get remove --purge -qy git-core \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -63,7 +63,7 @@ RUN apt-get update \
 RUN add-contenv \
 	PATH="${APP_PATH}:${PATH}" \
 	APP_PATH="${APP_PATH}" \
-	PYTHON_INTERPRETER=pypy3 \
+	PYTHON_INTERPRETER="pypy3" \
 	MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
 	MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}" \
 	LANG=C.UTF-8
