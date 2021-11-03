@@ -46,15 +46,14 @@ WORKDIR "${APP_PATH}"
 # Install packages
 RUN apt-get update \
 	&& apt-get install -qy --no-install-recommends \
+		ca-certificates \
 		git-core \
+		libsqlite3-0 \
 		mediainfo \
 		openssl \
 		tzdata \
 		unrar-free \
 		wget \
-	# Link Python \
-#	&& ln -sf /usr/bin/python3 /usr/bin/python \
-#	&& ln -s /usr/local/bin/pypy3 /usr/local/bin/python \
 	# Cleanup \
 #	&& apt-get remove --purge -qy git-core \
 	&& rm -rf /var/lib/apt/lists/*
