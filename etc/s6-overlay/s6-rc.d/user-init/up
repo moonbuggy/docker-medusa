@@ -1,0 +1,6 @@
+with-contenv
+importas -D "1000" PUID PUID
+importas -D "1000" PGID PGID
+foreground { groupmod -o -g "${PGID}" medusa }
+foreground { usermod -o -u "${PUID}" -g "${PGID}" medusa }
+echo "user-init: info: PUID=${PUID}, PGID=${PGID}"

@@ -17,7 +17,7 @@ Python generally runs faster in Debian than Alpine due to Alpine's usage of musl
 Older images used Bitnami's minideb instead of Debian-slim as a base, however the minideb images had limited architecture support so the change was necessary for multi-arch building. The `minideb` tags are no longer updated and should not be used.
 
 #### Architectures
-The Alpine and Debian tags above should automatically provide an image that works on `amd64`, `arm`, `armhf`, `arm64`, `386` and `ppc64le` devices. The PyPy builds support fewer architectures.
+The Alpine and Debian tags above should automatically provide an image that works on `amd64`, `arm`, `armhf`, `arm64`, `386`, `ppc64le` and `s390x` devices. The PyPy builds support fewer architectures.
 
 If desired, a particular architecture can be specified by adding a suffix to a tag in the form `<tag>-<arch>` (e.g. `debian-pypy-arm64`).
 
@@ -26,6 +26,7 @@ In keeping with the theme, I have not tested these builds on all the various arc
 ### Environment variables
 *   `PUID` - user ID to run as (default: `1000`)
 *   `PGID` - group ID to run as (default: `1000`)
+*   `TZ`   - set the timezone
 
 The PUID/PGID settings are to ensure correct permissions are set when accessing mounted host volumes.
 

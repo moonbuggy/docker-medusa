@@ -60,7 +60,7 @@ RUN apt-get update \
 
 # Set some environment variables via cont-init.d
 RUN add-contenv \
-	PATH="${APP_PATH}:${PATH}" \
+	# PATH="${APP_PATH}:${PATH}" \
 	APP_PATH="${APP_PATH}" \
 	PYTHON_INTERPRETER="pypy3" \
 	MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
@@ -73,6 +73,14 @@ RUN useradd -MU -u 1000 medusa
 COPY --from=source --chown=medusa:medusa /source/ ./
 COPY ./etc /etc
 
+# determine the s6 overlay major version in use, remove any uneeded config
+#   v2.* uses /etc/s6,  v3.* uses /etc/s6-overlay
+RUN if [ -d "/etc/s6" ]; then \
+    rm -rvf /etc/s6-overlay 2>/dev/null; \
+  elif [ -d "/etc/s6-overlay" ]; then \
+    rm -rvf /etc/cont-init.d /etc/services.d /etc/fix-attrs.d 2>/dev/null; \
+  fi
+
 RUN rm -f "/usr/bin/qemu-${QEMU_ARCH}-static" >/dev/null 2>&1
 
 
@@ -84,9 +92,11 @@ COPY --from=builder / /
 
 ARG PUID
 ARG PGID
+ARG APP_PATH
 
 ENV PUID="${PUID}" \
-	PGID="${PGID}"
+	PGID="${PGID}" \
+	PATH="${APP_PATH}:${PATH}"
 
 EXPOSE 8081
 
