@@ -1,5 +1,0 @@
-#!/usr/bin/with-contenv /bin/sh
-# shellcheck shell=sh
-
-exec s6-setuidgid medusa ${PYTHON_INTERPRETER} ${APP_PATH}/start.py \
-        --nolaunch --datadir /config

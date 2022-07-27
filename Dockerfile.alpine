@@ -1,3 +1,5 @@
+# syntax = docker/dockerfile:1.4.0
+
 ARG PYTHON_VERSION="3.10"
 ARG ALPINE_VERSION="3.14"
 
@@ -7,16 +9,16 @@ ARG MEDUSA_COMMIT_BRANCH="master"
 ARG MEDUSA_COMMIT_HASH="c302d8ae089a3c41eb8dda166cb71f9a4b39b79e"
 
 ARG APP_PATH="/app"
-ARG PUID=1000
-ARG PGID=1000
 
-ARG TARGET_ARCH_TAG="amd64"
+ARG BUILDPLATFORM="linux/amd64"
+FROM --platform="${BUILDPLATFORM}" moonbuggy2000/fetcher:latest AS fetcher
 
-## get the source code
+## get medusa
 #
-FROM moonbuggy2000/fetcher:latest AS source
+FROM fetcher AS medusa
 
-WORKDIR /source
+ARG APP_PATH
+WORKDIR "/fetcher_root${APP_PATH}"
 
 ARG MEDUSA_COMMIT_HASH
 RUN git init -q \
@@ -26,75 +28,71 @@ RUN git init -q \
 	&& rm -rf $(cat .dockerignore)
 
 
-## build the image
+## Get FFprobe
 #
-FROM "${FROM_IMAGE}" AS builder
+FROM fetcher AS ffprobe
 
-# QEMU static binaries from pre_build
-ARG QEMU_DIR=""
-ARG QEMU_ARCH=""
-COPY _dummyfile "${QEMU_DIR}/qemu-${QEMU_ARCH}-static*" /usr/bin/
+WORKDIR /fetcher_root/usr/local/bin/
+ARG FFPROBE_ARCH
+RUN if [ ! -z "${FFPROBE_ARCH}" ]; then \
+		mkdir /ffmpeg-temp; \
+		wget -qO- "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-${FFPROBE_ARCH}-static.tar.xz" | tar xJf - --strip-components=1 -C /ffmpeg-temp/; \
+		mv "/ffmpeg-temp/ffprobe" .; \
+		chmod a+x ffprobe; \
+		rm -rf /ffmpeg-temp; \
+	fi
 
-ARG APP_PATH
-ARG PUID
-ARG PGID
 
-ARG MEDUSA_COMMIT_BRANCH
-ARG MEDUSA_COMMIT_HASH
+## prepare the config
+#
+FROM "${FROM_IMAGE}" AS config
 
-WORKDIR "${APP_PATH}"
-
-# Install packages
-RUN apk --update add --no-cache \
-		git \
-		mediainfo \
-		shadow \
-		tzdata \
-		unrar \
-	# Add user and group \
-	&& addgroup -g ${PGID} medusa \
-	&& adduser -DH -u ${PUID} -G medusa medusa \
-	# Cleanup \
-#	&& apk del --no-cache git \
-	&& rm -rf /var/cache/apk/
+COPY root/ /config_root/
+WORKDIR /config_root/etc/
 
 # Set some environment variables via cont-init.d
+ARG APP_PATH
+ARG MEDUSA_COMMIT_BRANCH
+ARG MEDUSA_COMMIT_HASH
 RUN add-contenv \
-		# PATH="${APP_PATH}:${PATH}" \
 		APP_PATH="${APP_PATH}" \
 		PYTHON_INTERPRETER=python3 \
 		PYTHONDONTWRITEBYTECODE=1 \
 		PYTHONUNBUFFERED=1 \
 		MEDUSA_COMMIT_BRANCH="${MEDUSA_COMMIT_BRANCH}" \
-		MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}"
-
-COPY --from=source --chown=medusa:medusa /source/ ./
-COPY ./etc /etc
-
-# determine the s6 overlay major version in use, remove any uneeded config
-#   v2.* uses /etc/s6,  v3.* uses /etc/s6-overlay
-RUN if [ -d "/etc/s6" ]; then \
-    rm -rvf /etc/s6-overlay 2>/dev/null; \
-  elif [ -d "/etc/s6-overlay" ]; then \
-    rm -rvf /etc/cont-init.d /etc/services.d /etc/fix-attrs.d 2>/dev/null; \
-  fi
-
-RUN rm -f "/usr/bin/qemu-${QEMU_ARCH}-static" >/dev/null 2>&1
+		MEDUSA_COMMIT_HASH="${MEDUSA_COMMIT_HASH}" \
+	&& cp /etc/contenv_extra ./
 
 
-## drop QEMU static binaries
+## build the image
 #
-FROM "moonbuggy2000/scratch:${TARGET_ARCH_TAG}"
+FROM "${FROM_IMAGE}"
 
-COPY --from=builder / /
+ARG PUID=1000
+ARG PGID=1000
 
-ARG PUID
-ARG PGID
+# Install packages
+RUN apk -U add --no-cache \
+		git \
+		mediainfo \
+		shadow \
+		tzdata \
+		unrar \
+	&& addgroup -g ${PGID} medusa \
+	&& adduser -DH -u ${PUID} -G medusa medusa \
+#	&& apk del --no-cache git \
+	&& rm -rf /var/cache/apk/
+
+COPY --from=config /config_root/ /
+COPY --from=medusa --chown=medusa:medusa /fetcher_root/ /
+COPY --from=ffprobe /fetcher_root/ /
+
 ARG APP_PATH
-
 ENV PUID="${PUID}" \
 	PGID="${PGID}" \
 	PATH="${APP_PATH}:${PATH}"
+
+WORKDIR "${APP_PATH}"
 
 EXPOSE 8081
 
@@ -102,5 +100,4 @@ VOLUME /config /downloads /tv /anime
 
 ENTRYPOINT [ "/init" ]
 
-HEALTHCHECK --start-period=30s --timeout=10s \
-	CMD wget --quiet --tries=1 http://127.0.0.1:8081/ -O /dev/null || exit 1
+HEALTHCHECK --start-period=30s --timeout=10s CMD /healthcheck.sh
