@@ -9,7 +9,6 @@ ARG MEDUSA_COMMIT_HASH="c302d8ae089a3c41eb8dda166cb71f9a4b39b79e"
 
 ARG APP_PATH="/app"
 
-ARG BUILDPLATFORM="linux/amd64"
 FROM --platform="${BUILDPLATFORM}" moonbuggy2000/fetcher:latest AS fetcher
 
 ## get medusa
@@ -44,7 +43,10 @@ RUN if [ ! -z "${FFPROBE_ARCH}" ]; then \
 
 ## prepare the config
 #
-FROM "${FROM_IMAGE}" AS config
+# we can use BUILDPLATFORM here for better caching, since we're only copying
+# text files to the next stage
+#
+FROM --platform="${BUILDPLATFORM}" "${FROM_IMAGE}" AS config
 
 COPY root/ /config_root/
 WORKDIR /config_root/etc/
@@ -66,7 +68,7 @@ RUN add-contenv \
 
 ## build the image
 #
-FROM "${FROM_IMAGE}"
+FROM --platform="${TARGETPLATFORM}" "${FROM_IMAGE}"
 
 ARG PUID=1000
 ARG PGID=1000
