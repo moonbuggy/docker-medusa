@@ -71,7 +71,12 @@ FROM --platform="${TARGETPLATFORM}" "${FROM_IMAGE}"
 ARG PUID=1000
 ARG PGID=1000
 
-RUN apt-get update \
+# use a local APT caching proxy, if one is provided
+ARG APT_CACHE=""
+RUN export DEBIAN_FRONTEND="noninteractive" \
+	&& if [ ! -z "${APT_CACHE}" ]; then \
+		echo "Acquire::http { Proxy \"${APT_CACHE}\"; }" > /etc/apt/apt.conf.d/proxy; fi \
+	&& apt-get update \
 	&& apt-get install -qy --no-install-recommends \
 		ca-certificates \
 		git-core \
@@ -84,7 +89,8 @@ RUN apt-get update \
 #	&& apt-get remove --purge -qy git-core \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& groupadd -g "${PGID}" medusa \
-	&& useradd -M -u "${PUID}" -g medusa medusa
+	&& useradd -M -u "${PUID}" -g medusa medusa \
+	&& (rm -f /etc/apt/apt.conf.d/proxy 2>&1 || true)
 
 COPY --from=config /config_root/ /
 COPY --from=medusa --chown=medusa:medusa /fetcher_root/ /
@@ -93,7 +99,8 @@ COPY --from=ffprobe /fetcher_root/ /
 ARG APP_PATH
 ENV PUID="${PUID}" \
 	PGID="${PGID}" \
-	PATH="${APP_PATH}:${PATH}"
+	PATH="${APP_PATH}:${PATH}" \
+	S6_CMD_WAIT_FOR_SERVICES_MAXTIME=120000
 
 WORKDIR "${APP_PATH}"
 
@@ -103,4 +110,4 @@ VOLUME /config /downloads /tv /anime
 
 ENTRYPOINT [ "/init" ]
 
-HEALTHCHECK --start-period=30s --timeout=10s CMD /healthcheck.sh
+HEALTHCHECK --start-period=60s --timeout=10s CMD /healthcheck.sh
