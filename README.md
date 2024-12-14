@@ -29,9 +29,6 @@ The Alpine and Debian tags above should automatically provide an image that
 works on `amd64`, `arm`, `armhf`, `arm64`, `386`, `ppc64le` and `s390x` devices.
 The PyPy builds support fewer architectures.
 
-If desired, a particular architecture can be specified by adding a suffix to a
-tag in the form `<tag>-<arch>` (e.g. `debian-pypy-arm64`).
-
 In keeping with the theme, I have not tested these builds on all the various
 architectures.
 

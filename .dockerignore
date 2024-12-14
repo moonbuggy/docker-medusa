@@ -1,6 +1,10 @@
+.build_data
 .git*
 .dockerignore
 *.md
 Dockerfile*
-hooks/
-.build_data/
+hooks
+arch*.yaml
+build.sh
+build.conf
+__pycache__

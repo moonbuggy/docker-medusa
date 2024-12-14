@@ -1,4 +1,7 @@
 .build_data
-.qemu_static
-_dummyfile
 *.bak
+_dummyfile
+.qemu_static
+.include
+.imports
+__pycache__
