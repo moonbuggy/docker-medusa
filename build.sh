@@ -6,7 +6,7 @@ DOCKER_REPO="${DOCKER_REPO:-moonbuggy2000/medusa}"
 all_tags='alpine alpine-pypy debian debian-pypy'
 default_tag='latest'
 
-TARGET_VERSION_TYPE='custom'
+[ x"${1}" = x"all" ] || TARGET_VERSION_TYPE='custom'
 
 custom_source_latest () {
   echo "$(git_latest_release ${MEDUSA_REPO})" | sed -e 's|v||'

@@ -131,7 +131,7 @@ for arch in ${build_arches:-}; do
   # set the context
   build_cmd+=(.)
 
-  pretty_break_points="(--platform\S* |--build-arg |--file |--tag )"
+  pretty_break_points="(--platform\S* |--build-arg |--file |--tag |--target )"
   pretty_build_cmd=$(echo "${build_cmd[*]}" | sed -r -e "s/${pretty_break_points}/\\\ \n\t\1/g")
   printf '\n--- build command ---\n%s\n\n' "${pretty_build_cmd}"
 

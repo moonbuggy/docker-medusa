@@ -15,6 +15,11 @@ PyPy may result in Medusa running faster, although I've neither bench-marked it
 nor done a thorough test of compatibility. It seems to run as expected for me
 (so far).
 
+> [!NOTE]
+> The alpine-pypy image is currently running the equivalent of Python 3.6, which
+> doesn't meet the minimum requirement (currently 3.7.0). I need to update the
+> upstream containers and either build PyPy or pull it from the Alpine edge repo.
+
 Python generally runs faster in Debian than Alpine due to Alpine's usage of musl
 instead of glibc, so the `debian` images should theoretically perform better (at
 the cost of increased image size). Again, I have not benchmarked this to confirm.
